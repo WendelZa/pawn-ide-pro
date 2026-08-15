@@ -209,29 +209,37 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
   }
 
   // ---------- 5. statement sanity ----------
+  // Trabalha sobre uma versão "mascarada": comentários e literais viram espaços,
+  // então comentários de bloco de múltiplas linhas nunca geram falso positivo.
   say(`[5/6] Verificação sintática...`);
-  lines.forEach((raw, idx) => {
-    const l = stripComments(raw).trim();
+  const maskedLines = maskSource(source, tokens).split("\n");
+  maskedLines.forEach((maskedRaw, idx) => {
+    const l = maskedRaw.trim();
     if (!l || l.startsWith("#")) return;
+
+    const indented = /^[ \t]/.test(maskedRaw);
+    const isBlockKeyword = /^(if|else|for|while|do|switch|case|default|public|stock|forward|native|enum|const|static|new|return|delete)\b/.test(l);
+    const endsOpen = /[{};:,\\]$/.test(l);
+
     const needsSemi =
-      /^(new|return|delete)\b/.test(l) ||
-      (/[)\]\w"']$/.test(l) && !/^(if|else|for|while|do|switch|case|default|public|stock|forward|native|enum|const|static)\b/.test(l) && !/[{};:,]$/.test(l));
-    if (needsSemi && !l.endsWith(";") && !l.endsWith("\\") && !l.endsWith("{") && !l.endsWith(",")) {
-      add({ severity: "error", line: idx + 1, col: raw.length, code: "error 001", message: "esperado token ';'" });
+      !endsOpen &&
+      (/^(new|return|delete)\b/.test(l) ||
+        (indented && /[)\]\w]$/.test(l) && !isBlockKeyword));
+
+    if (needsSemi) {
+      add({ severity: "error", line: idx + 1, col: maskedRaw.length, code: "error 001", message: "esperado token ';'" });
     }
-    if (/^(if|while)\s*[^(]/.test(l)) {
+    if (/^(if|while|switch)\s*[^(\s]/.test(l)) {
       add({ severity: "error", line: idx + 1, col: 1, code: "error 029", message: "expressão inválida, esperado '('" });
     }
-    if (/=\s*;/.test(l)) {
-      add({ severity: "error", line: idx + 1, col: raw.indexOf("=") + 1, code: "error 029", message: "expressão inválida após '='" });
+    if (/[^=!<>+\-*/%]=\s*;/.test(l)) {
+      add({ severity: "error", line: idx + 1, col: l.indexOf("=") + 1, code: "error 029", message: "expressão inválida após '='" });
     }
-    if (/\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(l)) {
+    if (/\bif\s*\(\s*[A-Za-z_]\w*\s*=[^=]/.test(l)) {
       add({ severity: "warning", line: idx + 1, col: 1, code: "warning 211", message: "atribuição possivelmente confundida com comparação ('=' vs '==')" });
     }
-    if (raw.length > 0 && /\t/.test(raw) === false && /^ {1,3}\S/.test(raw) === true) {
-      // cosmetic only, no diagnostic
-    }
   });
+
 
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");

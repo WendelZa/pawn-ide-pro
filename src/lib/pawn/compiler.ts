@@ -38,11 +38,26 @@ export interface CompileResult {
 }
 
 const CALLBACKS = new Set([
-  "main", "OnGameModeInit", "OnGameModeExit", "OnPlayerConnect", "OnPlayerDisconnect",
-  "OnPlayerSpawn", "OnPlayerDeath", "OnPlayerText", "OnPlayerCommandText",
-  "OnPlayerRequestClass", "OnPlayerEnterVehicle", "OnPlayerExitVehicle",
-  "OnPlayerStateChange", "OnPlayerUpdate", "OnFilterScriptInit", "OnFilterScriptExit",
-  "OnDialogResponse", "OnPlayerKeyStateChange", "OnVehicleSpawn", "OnVehicleDeath",
+  "main",
+  "OnGameModeInit",
+  "OnGameModeExit",
+  "OnPlayerConnect",
+  "OnPlayerDisconnect",
+  "OnPlayerSpawn",
+  "OnPlayerDeath",
+  "OnPlayerText",
+  "OnPlayerCommandText",
+  "OnPlayerRequestClass",
+  "OnPlayerEnterVehicle",
+  "OnPlayerExitVehicle",
+  "OnPlayerStateChange",
+  "OnPlayerUpdate",
+  "OnFilterScriptInit",
+  "OnFilterScriptExit",
+  "OnDialogResponse",
+  "OnPlayerKeyStateChange",
+  "OnVehicleSpawn",
+  "OnVehicleDeath",
 ]);
 
 export function compilePawn(source: string, fileName = "untitled.pwn"): CompileResult {
@@ -63,13 +78,31 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
   // ---------- 1. unterminated literals / comments ----------
   for (const t of tokens) {
     if (t.kind === "comment" && t.value.startsWith("/*") && !t.value.endsWith("*/")) {
-      add({ severity: "error", line: t.line, col: t.col, code: "error 002", message: "comentário de bloco não terminado (*/ ausente)" });
+      add({
+        severity: "error",
+        line: t.line,
+        col: t.col,
+        code: "error 002",
+        message: "comentário de bloco não terminado (*/ ausente)",
+      });
     }
     if (t.kind === "string" && (t.value.length < 2 || !t.value.endsWith('"'))) {
-      add({ severity: "error", line: t.line, col: t.col, code: "error 037", message: "literal de string inválido (aspas não fechadas)" });
+      add({
+        severity: "error",
+        line: t.line,
+        col: t.col,
+        code: "error 037",
+        message: "literal de string inválido (aspas não fechadas)",
+      });
     }
     if (t.kind === "char" && (t.value.length < 3 || !t.value.endsWith("'"))) {
-      add({ severity: "error", line: t.line, col: t.col, code: "error 027", message: "constante de caractere inválida" });
+      add({
+        severity: "error",
+        line: t.line,
+        col: t.col,
+        code: "error 027",
+        message: "constante de caractere inválida",
+      });
     }
   }
 
@@ -79,31 +112,78 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
     if (t.kind !== "directive") continue;
     const m = /^#\s*([a-z]+)\s*(.*)$/s.exec(t.value);
     if (!m) {
-      add({ severity: "error", line: t.line, col: t.col, code: "error 010", message: "diretiva de pré-processador inválida" });
+      add({
+        severity: "error",
+        line: t.line,
+        col: t.col,
+        code: "error 010",
+        message: "diretiva de pré-processador inválida",
+      });
       continue;
     }
     const [, name, argRaw] = m;
     const arg = (argRaw ?? "").trim();
-    const known = ["include", "tryinclude", "define", "undef", "if", "else", "elseif", "endif", "pragma", "emit", "error", "warning", "assert", "endinput", "file", "line"];
+    const known = [
+      "include",
+      "tryinclude",
+      "define",
+      "undef",
+      "if",
+      "else",
+      "elseif",
+      "endif",
+      "pragma",
+      "emit",
+      "error",
+      "warning",
+      "assert",
+      "endinput",
+      "file",
+      "line",
+    ];
     if (!known.includes(name!)) {
-      add({ severity: "error", line: t.line, col: t.col, code: "error 010", message: `diretiva desconhecida: #${name}` });
+      add({
+        severity: "error",
+        line: t.line,
+        col: t.col,
+        code: "error 010",
+        message: `diretiva desconhecida: #${name}`,
+      });
       continue;
     }
     if (name === "include" || name === "tryinclude") {
       const inc = /^[<"]([^">]+)[">]/.exec(arg);
       if (!inc) {
-        add({ severity: "error", line: t.line, col: t.col, code: "error 037", message: "nome de arquivo inválido em #include" });
+        add({
+          severity: "error",
+          line: t.line,
+          col: t.col,
+          code: "error 037",
+          message: "nome de arquivo inválido em #include",
+        });
       } else {
         includes.push(inc[1]!);
         say(`      #include <${inc[1]}>`);
       }
     }
     if (name === "define" && !arg) {
-      add({ severity: "error", line: t.line, col: t.col, code: "error 038", message: "#define sem identificador" });
+      add({
+        severity: "error",
+        line: t.line,
+        col: t.col,
+        code: "error 038",
+        message: "#define sem identificador",
+      });
     }
   }
   if (!includes.some((i) => /a_samp|a_sampdb|open\.mp|YSI/i.test(i))) {
-    add({ severity: "warning", line: 1, col: 1, code: "warning 203", message: "nenhum include base encontrado (#include <a_samp>)" });
+    add({
+      severity: "warning",
+      line: 1,
+      col: 1,
+      code: "warning 203",
+      message: "nenhum include base encontrado (#include <a_samp>)",
+    });
   }
 
   say(`[2/6] Análise léxica... ${code.length} tokens em ${lines.length} linhas`);
@@ -118,14 +198,32 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
     else if (")]}".includes(t.value)) {
       const open = stack.pop();
       if (!open) {
-        add({ severity: "error", line: t.line, col: t.col, code: "error 054", message: `'${t.value}' sem abertura correspondente` });
+        add({
+          severity: "error",
+          line: t.line,
+          col: t.col,
+          code: "error 054",
+          message: `'${t.value}' sem abertura correspondente`,
+        });
       } else if (open.value !== pairs[t.value]) {
-        add({ severity: "error", line: t.line, col: t.col, code: "error 054", message: `esperado '${closerOf(open.value)}' mas encontrado '${t.value}'` });
+        add({
+          severity: "error",
+          line: t.line,
+          col: t.col,
+          code: "error 054",
+          message: `esperado '${closerOf(open.value)}' mas encontrado '${t.value}'`,
+        });
       }
     }
   }
   for (const open of stack) {
-    add({ severity: "error", line: open.line, col: open.col, code: "error 030", message: `'${open.value}' aberto e nunca fechado` });
+    add({
+      severity: "error",
+      line: open.line,
+      col: open.col,
+      code: "error 030",
+      message: `'${open.value}' aberto e nunca fechado`,
+    });
   }
 
   // ---------- 4. declarations ----------
@@ -142,13 +240,22 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
     const next = code[i + 1];
     const next2 = code[i + 2];
 
-    if (t.kind === "keyword" && (t.value === "public" || t.value === "forward" || t.value === "native" || t.value === "stock")) {
+    if (
+      t.kind === "keyword" &&
+      (t.value === "public" || t.value === "forward" || t.value === "native" || t.value === "stock")
+    ) {
       // skip optional return tag: `public Float:Foo(`
       let j = i + 1;
       if (code[j] && code[j + 1]?.value === ":") j += 2;
       const nameTok = code[j];
       if (!nameTok || !isName(nameTok)) {
-        add({ severity: "error", line: t.line, col: t.col, code: "error 020", message: `nome de símbolo inválido após '${t.value}'` });
+        add({
+          severity: "error",
+          line: t.line,
+          col: t.col,
+          code: "error 020",
+          message: `nome de símbolo inválido após '${t.value}'`,
+        });
         continue;
       }
       if (code[j + 1]?.value !== "(") {
@@ -156,7 +263,13 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
           globals.push(nameTok.value);
           continue;
         }
-        add({ severity: "error", line: nameTok.line, col: nameTok.col, code: "error 010", message: `esperado '(' na declaração de '${nameTok.value}'` });
+        add({
+          severity: "error",
+          line: nameTok.line,
+          col: nameTok.col,
+          code: "error 010",
+          message: `esperado '(' na declaração de '${nameTok.value}'`,
+        });
         continue;
       }
       if (t.value === "public") {
@@ -187,24 +300,52 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
     void next2;
   }
 
-  if (!definedFns.has("main") && !publics.includes("main") && !includes.some((i) => /a_samp/.test(i) && false)) {
+  if (
+    !definedFns.has("main") &&
+    !publics.includes("main") &&
+    !includes.some((i) => /a_samp/.test(i) && false)
+  ) {
     if (!/\bmain\s*\(/.test(source)) {
-      add({ severity: "warning", line: 1, col: 1, code: "warning 203", message: "função 'main' não encontrada — obrigatória em gamemodes" });
+      add({
+        severity: "warning",
+        line: 1,
+        col: 1,
+        code: "warning 203",
+        message: "função 'main' não encontrada — obrigatória em gamemodes",
+      });
     }
   }
 
   // undefined symbol detection
   for (const c of calls) {
     const name = c.value;
-    if (definedFns.has(name) || NATIVES.has(name) || CALLBACKS.has(name) || forwards.includes(name)) continue;
-    if (/^(if|while|for|switch|return|sizeof|tagof|case|defined|assert|strlen|printf|print)$/.test(name)) continue;
+    if (definedFns.has(name) || NATIVES.has(name) || CALLBACKS.has(name) || forwards.includes(name))
+      continue;
+    if (
+      /^(if|while|for|switch|return|sizeof|tagof|case|defined|assert|strlen|printf|print)$/.test(
+        name,
+      )
+    )
+      continue;
     if (isKnownMacro(name, source)) continue;
-    add({ severity: "warning", line: c.line, col: c.col, code: "warning 235", message: `'${name}' não possui protótipo visível (declare com forward/native)` });
+    add({
+      severity: "warning",
+      line: c.line,
+      col: c.col,
+      code: "warning 235",
+      message: `'${name}' não possui protótipo visível (declare com forward/native)`,
+    });
   }
 
   for (const f of forwards) {
     if (!publics.includes(f)) {
-      add({ severity: "warning", line: 1, col: 1, code: "warning 233", message: `'${f}' declarado com forward mas nunca implementado como public` });
+      add({
+        severity: "warning",
+        line: 1,
+        col: 1,
+        code: "warning 233",
+        message: `'${f}' declarado com forward mas nunca implementado como public`,
+      });
     }
   }
 
@@ -218,28 +359,53 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
     if (!l || l.startsWith("#")) return;
 
     const indented = /^[ \t]/.test(maskedRaw);
-    const isBlockKeyword = /^(if|else|for|while|do|switch|case|default|public|stock|forward|native|enum|const|static|new|return|delete)\b/.test(l);
+    const isBlockKeyword =
+      /^(if|else|for|while|do|switch|case|default|public|stock|forward|native|enum|const|static|new|return|delete)\b/.test(
+        l,
+      );
     const endsOpen = /[{};:,\\]$/.test(l);
 
     const needsSemi =
       !endsOpen &&
-      (/^(new|return|delete)\b/.test(l) ||
-        (indented && /[)\]\w]$/.test(l) && !isBlockKeyword));
+      (/^(new|return|delete)\b/.test(l) || (indented && /[)\]\w]$/.test(l) && !isBlockKeyword));
 
     if (needsSemi) {
-      add({ severity: "error", line: idx + 1, col: maskedRaw.length, code: "error 001", message: "esperado token ';'" });
+      add({
+        severity: "error",
+        line: idx + 1,
+        col: maskedRaw.length,
+        code: "error 001",
+        message: "esperado token ';'",
+      });
     }
     if (/^(if|while|switch)\s*[^(\s]/.test(l)) {
-      add({ severity: "error", line: idx + 1, col: 1, code: "error 029", message: "expressão inválida, esperado '('" });
+      add({
+        severity: "error",
+        line: idx + 1,
+        col: 1,
+        code: "error 029",
+        message: "expressão inválida, esperado '('",
+      });
     }
     if (/[^=!<>+\-*/%]=\s*;/.test(l)) {
-      add({ severity: "error", line: idx + 1, col: l.indexOf("=") + 1, code: "error 029", message: "expressão inválida após '='" });
+      add({
+        severity: "error",
+        line: idx + 1,
+        col: l.indexOf("=") + 1,
+        code: "error 029",
+        message: "expressão inválida após '='",
+      });
     }
     if (/\bif\s*\(\s*[A-Za-z_]\w*\s*=[^=]/.test(l)) {
-      add({ severity: "warning", line: idx + 1, col: 1, code: "warning 211", message: "atribuição possivelmente confundida com comparação ('=' vs '==')" });
+      add({
+        severity: "warning",
+        line: idx + 1,
+        col: 1,
+        code: "warning 211",
+        message: "atribuição possivelmente confundida com comparação ('=' vs '==')",
+      });
     }
   });
-
 
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");
@@ -249,11 +415,16 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
   if (errors.length === 0) {
     amx = buildAmx({
       publics: publics.length ? publics : ["main"],
-      natives: dedupe([...nativesFound, ...calls.map((c) => c.value).filter((n) => NATIVES.has(n))]),
+      natives: dedupe([
+        ...nativesFound,
+        ...calls.map((c) => c.value).filter((n) => NATIVES.has(n)),
+      ]),
       globals: dedupe(globals),
     });
     say(`      header AMX v8 escrito (${amx.length} bytes)`, "success");
-    say(`      publics: ${publics.length} · natives: ${nativesFound.length} · globais: ${dedupe(globals).length}`);
+    say(
+      `      publics: ${publics.length} · natives: ${nativesFound.length} · globais: ${dedupe(globals).length}`,
+    );
   } else {
     say(`      abortado: ${errors.length} erro(s) impedem a geração do .amx`, "error");
   }
@@ -261,9 +432,15 @@ export function compilePawn(source: string, fileName = "untitled.pwn"): CompileR
   const durationMs = Math.max(1, Math.round(performance.now() - started));
 
   if (errors.length === 0) {
-    say(`Compilação concluída em ${durationMs} ms — ${warnings.length} aviso(s), 0 erro(s).`, "success");
+    say(
+      `Compilação concluída em ${durationMs} ms — ${warnings.length} aviso(s), 0 erro(s).`,
+      "success",
+    );
   } else {
-    say(`Compilação falhou em ${durationMs} ms — ${errors.length} erro(s), ${warnings.length} aviso(s).`, "error");
+    say(
+      `Compilação falhou em ${durationMs} ms — ${errors.length} erro(s), ${warnings.length} aviso(s).`,
+      "error",
+    );
   }
 
   return {
@@ -291,7 +468,13 @@ function closerOf(open: string) {
 }
 
 function isName(t: Token) {
-  return t.kind === "identifier" || t.kind === "function" || t.kind === "native" || t.kind === "constant" || t.kind === "type";
+  return (
+    t.kind === "identifier" ||
+    t.kind === "function" ||
+    t.kind === "native" ||
+    t.kind === "constant" ||
+    t.kind === "type"
+  );
 }
 
 function isStatementStart(prev: Token) {
@@ -299,7 +482,10 @@ function isStatementStart(prev: Token) {
 }
 
 function isKnownMacro(name: string, source: string) {
-  return new RegExp(`#define\\s+${escapeRe(name)}\\b`).test(source) || new RegExp(`\\bforward\\s+(?:\\w+:)?${escapeRe(name)}\\s*\\(`).test(source);
+  return (
+    new RegExp(`#define\\s+${escapeRe(name)}\\b`).test(source) ||
+    new RegExp(`\\bforward\\s+(?:\\w+:)?${escapeRe(name)}\\s*\\(`).test(source)
+  );
 }
 
 function escapeRe(s: string) {

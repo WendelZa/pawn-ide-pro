@@ -96,10 +96,7 @@ export function OutputPanel({ result, tab, onTabChange, onGoto, height }: Output
 
 function DiagLine({ d, onGoto }: { d: Diagnostic; onGoto: (line: number) => void }) {
   return (
-    <button
-      onClick={() => onGoto(d.line)}
-      className="block w-full text-left hover:bg-accent/60"
-    >
+    <button onClick={() => onGoto(d.line)} className="block w-full text-left hover:bg-accent/60">
       <span className="text-info">linha {d.line}</span>
       <span className="text-muted-foreground">:{d.col}</span>{" "}
       <span className={sevColor[d.severity]}>{d.code}:</span>{" "}

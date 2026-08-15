@@ -176,7 +176,9 @@ export function buildAmx(input: AmxBuildInput): Uint8Array {
       .sort(byName(publics, nameOffsets)),
   );
   writeDefs(natives.map((n) => ({ address: 0, nameOffset: nameOffsets.get(n)! })));
-  writeDefs(globals.map((n, idx) => ({ address: globalAddrs[idx]!, nameOffset: nameOffsets.get(n)! })));
+  writeDefs(
+    globals.map((n, idx) => ({ address: globalAddrs[idx]!, nameOffset: nameOffsets.get(n)! })),
+  );
 
   out.raw(Array.from(names.toUint8Array()));
   while (out.length < codeOfs) out.u8(0);

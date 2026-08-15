@@ -12,7 +12,13 @@ interface CodeEditorProps {
 
 const LINE_HEIGHT = 20;
 
-export function CodeEditor({ value, onChange, diagnostics, onCursorChange, gotoLine }: CodeEditorProps) {
+export function CodeEditor({
+  value,
+  onChange,
+  diagnostics,
+  onCursorChange,
+  gotoLine,
+}: CodeEditorProps) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
@@ -116,8 +122,7 @@ export function CodeEditor({ value, onChange, diagnostics, onCursorChange, gotoL
             <div
               key={n}
               className={
-                "relative pr-3 " +
-                (n === activeLine ? "text-foreground" : "text-editor-gutter")
+                "relative pr-3 " + (n === activeLine ? "text-foreground" : "text-editor-gutter")
               }
               style={{ height: LINE_HEIGHT }}
             >

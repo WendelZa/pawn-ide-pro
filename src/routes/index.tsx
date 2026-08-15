@@ -94,7 +94,11 @@ function PawnIde() {
       setResult(res);
       setTab(res.diagnostics.length && !res.ok ? "problems" : "output");
       setBusy(false);
-      setToast(res.ok ? `Compilado: ${current.name.replace(/\.pwn$/i, ".amx")} pronto` : "Compilação falhou");
+      setToast(
+        res.ok
+          ? `Compilado: ${current.name.replace(/\.pwn$/i, ".amx")} pronto`
+          : "Compilação falhou",
+      );
     }, 20);
   }, [current]);
 
@@ -145,17 +149,14 @@ function PawnIde() {
     setToast("Binário .amx baixado");
   }, [result, current.name, download]);
 
-  const closeFile = useCallback(
-    (idx: number) => {
-      setFiles((prev) => {
-        if (prev.length === 1) return prev;
-        const next = prev.filter((_, i) => i !== idx);
-        setActive((a) => (a >= next.length ? next.length - 1 : a > idx ? a - 1 : a));
-        return next;
-      });
-    },
-    [],
-  );
+  const closeFile = useCallback((idx: number) => {
+    setFiles((prev) => {
+      if (prev.length === 1) return prev;
+      const next = prev.filter((_, i) => i !== idx);
+      setActive((a) => (a >= next.length ? next.length - 1 : a > idx ? a - 1 : a));
+      return next;
+    });
+  }, []);
 
   // atalhos de teclado
   useEffect(() => {
@@ -326,7 +327,13 @@ function PawnIde() {
 
       {/* status bar */}
       <footer className="flex h-6 shrink-0 items-center gap-4 bg-statusbar px-3 text-[11px] text-statusbar-foreground">
-        <span>{errorCount === 0 && result ? "✔ Build OK" : result ? `✖ ${errorCount} erro(s)` : "Pronto"}</span>
+        <span>
+          {errorCount === 0 && result
+            ? "✔ Build OK"
+            : result
+              ? `✖ ${errorCount} erro(s)`
+              : "Pronto"}
+        </span>
         <span>
           Ln {cursor.line}, Col {cursor.col}
         </span>

@@ -34,6 +34,10 @@ interface PawnFile {
 
 const STORAGE_KEY = "pawn-ide-workspace-v1";
 
+// Restaura o workspace apenas uma vez por sessão de página, para que um
+// remount do componente nunca sobrescreva o que o usuário está digitando.
+let workspaceRestored = false;
+
 function PawnIde() {
   const [files, setFiles] = useState<PawnFile[]>([{ name: "gamemode.pwn", content: SAMPLE_PWN }]);
   const [active, setActive] = useState(0);
@@ -51,6 +55,8 @@ function PawnIde() {
 
   // restore workspace
   useEffect(() => {
+    if (workspaceRestored) return;
+    workspaceRestored = true;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;

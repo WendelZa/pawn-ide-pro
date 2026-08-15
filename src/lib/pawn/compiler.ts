@@ -306,10 +306,6 @@ function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function unusedStripComments(line: string) {
-  return line.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
-}
-
 function dedupe(a: string[]) {
   return Array.from(new Set(a.filter(Boolean)));
 }

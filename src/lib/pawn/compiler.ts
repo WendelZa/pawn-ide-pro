@@ -306,10 +306,25 @@ function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function stripComments(line: string) {
+function unusedStripComments(line: string) {
   return line.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
 }
 
 function dedupe(a: string[]) {
   return Array.from(new Set(a.filter(Boolean)));
+}
+
+/**
+ * Substitui comentários e literais por espaços (preservando linhas/colunas),
+ * para que a verificação linha-a-linha nunca inspecione texto não-código.
+ */
+function maskSource(source: string, tokens: Token[]): string {
+  const chars = source.split("");
+  for (const t of tokens) {
+    if (t.kind !== "comment" && t.kind !== "string" && t.kind !== "char") continue;
+    for (let i = t.index; i < t.index + t.value.length && i < chars.length; i++) {
+      if (chars[i] !== "\n") chars[i] = t.kind === "comment" ? " " : "0";
+    }
+  }
+  return chars.join("");
 }

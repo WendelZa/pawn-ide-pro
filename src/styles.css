@@ -193,3 +193,34 @@
 @utility scroll-thin {
   scrollbar-width: thin;
 }
+
+/* ---------- Pawn Master Pro: fundo animado e efeitos ---------- */
+@utility app-aurora {
+  position: relative;
+  background:
+    radial-gradient(60% 50% at 12% 8%, oklch(0.45 0.16 265 / 35%), transparent 70%),
+    radial-gradient(50% 45% at 88% 4%, oklch(0.5 0.17 310 / 30%), transparent 70%),
+    radial-gradient(55% 50% at 50% 100%, oklch(0.55 0.15 155 / 22%), transparent 70%),
+    var(--color-background);
+  background-size: 180% 180%, 180% 180%, 180% 180%, auto;
+  animation: aurora-shift 26s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-shift {
+  0% {
+    background-position:
+      0% 0%,
+      100% 0%,
+      50% 100%;
+  }
+  100% {
+    background-position:
+      30% 20%,
+      70% 15%,
+      40% 80%;
+  }
+}
+
+@utility glow-primary {
+  box-shadow: 0 6px 22px -8px oklch(0.55 0.16 285 / 65%);
+}
